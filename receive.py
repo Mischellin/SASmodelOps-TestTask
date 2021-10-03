@@ -9,8 +9,8 @@ def main():
     channel.queue_declare(queue='SQLLog', durable=True)
     print(' [*] Waiting for messages. To exit press CTRL+C')
 
-    def callback(ch, method, body):
-        print(" [x] Received ", body)
+    def callback(ch, method,properties, body):
+        print(" [x] Received ",body)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     channel.basic_qos(prefetch_count=1)
