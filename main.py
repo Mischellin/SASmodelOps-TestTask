@@ -8,31 +8,31 @@ from datetime import datetime
 def time_gen():
     """
     A function that creates a random date between 03-09-2020 and
-    03-09-2021 returning it in the format: "YYYY-MM-DD, HH:MM:SS"
+    03-09-2021 returning it in the str() type and format: "YYYY-MM-DD, HH:MM:SS"
     :return:
     """
     timestamp = random.randint(1630683282, 1633275282)
     date_time = datetime.fromtimestamp(timestamp)
-    return date_time.strftime("%Y-%m-%d, %H:%M:%S")
+    return str(date_time.strftime("%Y-%m-%d|%H:%M:%S"))
 
 
 def temperature_gen():
     """
     A function that creates a random temperature between 100 and
-    373 degrees Kelvin that returns it as int()
+    373 degrees Kelvin that returns it as str()
     :return:
     """
     temper_kel = random.randint(100, 373)
-    return temper_kel
+    return str(temper_kel)
 
 
 def pressure_gen():
     """
-    A function that creates a random pressure between 10 and 100 Pascal returning it in int() type
+    A function that creates a random pressure between 10 and 100 Pascal returning it in str() type
     :return:
     """
     pressure_pa = random.randint(10, 100)
-    return pressure_pa
+    return str(pressure_pa)
 
 
 def callback(ch, method, properties, body):
@@ -40,11 +40,12 @@ def callback(ch, method, properties, body):
 
 
 def sender(channel, message, connection, event):
+    msg = message+';'+event
     channel.queue_declare(queue='SQLLog', durable=True)
     channel.basic_publish(
         exchange='',
         routing_key='SQLLog',
-        body=message,
+        body=msg,
         properties=pika.BasicProperties(
             delivery_mode=2,  # make message persistent
         ))
@@ -53,19 +54,18 @@ def sender(channel, message, connection, event):
 
 
 # def main():
+for i in range(10):
+    time, temperature, pressure = time_gen(), temperature_gen(), pressure_gen()
 
-time, temperature, pressure = time_gen(), temperature_gen(), pressure_gen()
+    sensor = time + ';' + temperature + ';' + pressure
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(host='localhost'))
+    channel = connection.channel()
 
-sensor = [time, temperature, pressure]
-
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='localhost'))
-channel = connection.channel()
-
-if sensor[1] > 300:
-    sender(channel, str(sensor), connection, event="Alert")
-else:
-    sender(channel, str(sensor), connection, event="Log")
+    if int(temperature) > 300:
+        sender(channel, sensor, connection, event="Alert")
+    else:
+        sender(channel, sensor, connection, event="Log")
 
 # if __name__ == '__main__':
 #     try:
